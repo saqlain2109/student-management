@@ -1,0 +1,390 @@
+import React, { useState, useEffect } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { ArrowLeft, Save, Download, FileText, AlertCircle, CreditCard, Receipt } from 'lucide-react';
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../../components/ui/card';
+import { api } from '../../services/api';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+
+const numberToWords = (num) => {
+    const a = ['','One ','Two ','Three ','Four ', 'Five ','Six ','Seven ','Eight ','Nine ','Ten ','Eleven ','Twelve ','Thirteen ','Fourteen ','Fifteen ','Sixteen ','Seventeen ','Eighteen ','Nineteen '];
+    const b = ['', '', 'Twenty','Thirty','Forty','Fifty', 'Sixty','Seventy','Eighty','Ninety'];
+    if ((num = num.toString()).length > 9) return 'overflow';
+    let n = ('000000000' + num).substr(-9).match(/^(\d{2})(\d{2})(\d{2})(\d{1})(\d{2})$/);
+    if (!n) return; let str = '';
+    str += (n[1] != 0) ? (a[Number(n[1])] || b[n[1][0]] + ' ' + a[n[1][1]]) + 'Crore ' : '';
+    str += (n[2] != 0) ? (a[Number(n[2])] || b[n[2][0]] + ' ' + a[n[2][1]]) + 'Lakh ' : '';
+    str += (n[3] != 0) ? (a[Number(n[3])] || b[n[3][0]] + ' ' + a[n[3][1]]) + 'Thousand ' : '';
+    str += (n[4] != 0) ? (a[Number(n[4])] || b[n[4][0]] + ' ' + a[n[4][1]]) + 'Hundred ' : '';
+    str += (n[5] != 0) ? ((str != '') ? 'and ' : '') + (a[Number(n[5])] || b[n[5][0]] + ' ' + a[n[5][1]]) + 'Only' : 'Only';
+    return str.trim();
+};
+
+const RecordPayment = () => {
+  const { studentId } = useParams();
+  const navigate = useNavigate();
+  
+  const [student, setStudent] = useState(null);
+  const [feeRecord, setFeeRecord] = useState(null);
+  const [payments, setPayments] = useState([]);
+  
+  const [totalFeeForm, setTotalFeeForm] = useState({ amount: '' });
+  const [paymentForm, setPaymentForm] = useState({ amount: '' });
+
+  useEffect(() => {
+    loadData();
+  }, [studentId, navigate]);
+
+  const loadData = async () => {
+    try {
+      const studentData = await api.students.getById(studentId);
+      if (!studentData) {
+        navigate('/fees');
+        return;
+      }
+      setStudent(studentData);
+      
+      const record = await api.fees.getByStudentId(studentId);
+      setFeeRecord(record);
+      if (record) {
+        setTotalFeeForm({ amount: record.total_amount ? record.total_amount.toString() : '' });
+      }
+      
+      const history = await api.payments.getByStudentId(studentId);
+      setPayments(history);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleSetTotalFee = async (e) => {
+    e.preventDefault();
+    if (!totalFeeForm.amount) return;
+    try {
+      const updated = await api.fees.update(feeRecord.id, {
+        total_amount: parseFloat(totalFeeForm.amount)
+      });
+      setFeeRecord(updated);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleRecordPayment = async (e) => {
+    e.preventDefault();
+    const amount = parseFloat(paymentForm.amount);
+    if (!amount || amount <= 0) return;
+    
+    const pending = feeRecord.total_amount - feeRecord.paid_amount;
+    if (amount > pending) {
+      alert("Amount cannot exceed the pending balance");
+      return;
+    }
+    
+    try {
+      const newPayment = await api.payments.create({
+        student_id: studentId,
+        fee_id: feeRecord.id,
+        amount_paid: amount,
+        payment_mode: 'Online',
+      });
+      
+      setPaymentForm({ amount: '' });
+      loadData(); // reload all to get updated fee record and payment history
+      
+      // Auto generate receipt on payment
+      generateReceipt(newPayment);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const generateReceipt = (payment) => {
+    const doc = new jsPDF();
+    
+    // Set up basic fonts
+    doc.setFont('helvetica');
+    
+    // Draw outer border
+    doc.setLineWidth(0.5);
+    doc.rect(15, 15, 180, 200); // Main outer border
+    doc.rect(17, 17, 176, 196); // Inner double border
+    
+    // Header
+    doc.setFontSize(22);
+    doc.setFont('helvetica', 'bold');
+    doc.text("St. Mary's", 105, 35, { align: 'center' });
+    
+    doc.setFontSize(16);
+    doc.text("Arts, Commerce & Science S.R. College", 105, 45, { align: 'center' });
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text("Khadi Machine, Fakirshah Baba Hill Road,", 105, 52, { align: 'center' });
+    doc.text("Kausa, Mumbra, Dist. - Thane - 400 612.", 105, 58, { align: 'center' });
+    
+    doc.line(17, 65, 193, 65);
+    
+    // Receipt No & Date
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text(payment.receipt_number || '', 20, 75);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Receipt No.:`, 20, 82);
+    
+    doc.text(`Date : ${new Date(payment.created_at).toLocaleDateString()}`, 130, 82);
+    
+    doc.line(17, 85, 193, 85);
+    
+    // Name & Std / Roll No
+    doc.text(`Name:`, 20, 95);
+    doc.setFont('helvetica', 'italic');
+    doc.text(student.full_name || '', 35, 95);
+    doc.setFont('helvetica', 'normal');
+    doc.line(33, 97, 125, 97); // underline name
+    
+    doc.line(128, 85, 128, 105); // vertical line for Std box
+    
+    doc.text(`Std. :`, 130, 93);
+    doc.text(student.semester || student.course || '', 142, 93);
+    doc.line(140, 95, 190, 95);
+    
+    doc.text(`Roll No. :`, 130, 102);
+    doc.text(student.roll_number || '', 150, 102);
+    doc.line(148, 104, 190, 104);
+    
+    doc.line(17, 105, 193, 105);
+    
+    // Table Header
+    doc.setFont('helvetica', 'bold');
+    doc.text('PARTICULARS', 60, 112);
+    doc.text('Rs.', 145, 112);
+    doc.text('P.', 175, 112);
+    
+    doc.line(17, 115, 193, 115);
+    
+    // Table content lines
+    doc.line(135, 105, 135, 160); // Vertical line before Rs.
+    doc.line(165, 105, 165, 160); // Vertical line before P.
+    
+    doc.setFont('helvetica', 'normal');
+    const startY = 125;
+    const lineGap = 15;
+    
+    // Rows
+    doc.text('Amount Paid', 20, startY);
+    doc.text(parseFloat(payment.amount_paid).toString(), 140, startY); 
+    doc.text('-', 178, startY);
+    doc.line(17, startY+5, 193, startY+5);
+    
+    const pendingBalance = feeRecord.total_amount - feeRecord.paid_amount;
+    doc.text('Pending Amount', 20, startY + lineGap);
+    doc.text(pendingBalance.toString(), 140, startY + lineGap);
+    doc.text('-', 178, startY + lineGap);
+    doc.line(17, startY+lineGap+5, 193, startY+lineGap+5);
+    
+    // Total
+    doc.setFont('helvetica', 'bold');
+    doc.text('TOTAL', 100, 155);
+    doc.text(parseFloat(payment.amount_paid).toString(), 140, 155);
+    doc.text('-', 178, 155);
+    
+    doc.line(17, 160, 193, 160);
+    
+    // Amount in words
+    const amountInWords = numberToWords(parseFloat(payment.amount_paid));
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Rs. `, 20, 175);
+    doc.setFont('helvetica', 'italic');
+    doc.text(`${amountInWords}`, 30, 175);
+    doc.line(28, 177, 130, 177); // underline words
+    
+    // Received by
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Received by`, 150, 195);
+    
+    // Save robustly using Blob and anchor tag to force .pdf extension
+    try {
+      const pdfBlob = doc.output('blob');
+      const url = URL.createObjectURL(pdfBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Fee_Receipt_${payment.receipt_number || 'Official'}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (err) {
+      console.error("PDF download failed using blob, falling back to doc.save", err);
+      doc.save(`Fee_Receipt_${payment.receipt_number || 'Official'}.pdf`);
+    }
+  };
+
+  if (!student || !feeRecord) return <div className="p-8 animate-pulse text-muted-foreground text-center">Loading payment portal...</div>;
+
+  const pendingAmount = feeRecord.total_amount - feeRecord.paid_amount;
+  const isFullyPaid = feeRecord.total_amount > 0 && pendingAmount <= 0;
+
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(amount);
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-4">
+        <Link to="/fees">
+          <Button variant="outline" size="icon">
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+        </Link>
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Fee Management Portal</h2>
+          <p className="text-muted-foreground mt-1">Record payments and manage dues for {student.full_name}</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <Card className="border-l-4 border-l-primary">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Course Fee</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatCurrency(feeRecord.total_amount)}</div>
+          </CardContent>
+        </Card>
+        <Card className="border-l-4 border-l-emerald-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Paid</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(feeRecord.paid_amount)}</div>
+          </CardContent>
+        </Card>
+        <Card className="border-l-4 border-l-destructive">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Pending Balance</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-destructive">{formatCurrency(pendingAmount)}</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Fee Structure Setup
+              </CardTitle>
+              <CardDescription>Set the total fee expected for this course.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSetTotalFee} className="flex items-end gap-4">
+                <div className="flex-1 space-y-2">
+                  <label className="text-sm font-medium">Total Amount (INR)</label>
+                  <Input 
+                    type="number" 
+                    value={totalFeeForm.amount}
+                    onChange={(e) => setTotalFeeForm({ amount: e.target.value })}
+                    placeholder="e.g. 100000"
+                    min="0"
+                    required
+                  />
+                </div>
+                <Button type="submit" variant="secondary">Update</Button>
+              </form>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5" />
+                Record Payment
+              </CardTitle>
+              <CardDescription>Log a new fee installment payment.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {feeRecord.total_amount === 0 ? (
+                <div className="flex items-center gap-3 rounded-lg bg-yellow-50 p-4 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-500">
+                  <AlertCircle className="h-5 w-5" />
+                  <p className="text-sm font-medium">Please setup the total course fee first.</p>
+                </div>
+              ) : isFullyPaid ? (
+                <div className="flex items-center gap-3 rounded-lg bg-emerald-50 p-4 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-500">
+                  <AlertCircle className="h-5 w-5" />
+                  <p className="text-sm font-medium">All dues cleared. No pending payments.</p>
+                </div>
+              ) : (
+                <form onSubmit={handleRecordPayment} className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Payment Amount (INR)</label>
+                    <Input 
+                      type="number" 
+                      value={paymentForm.amount}
+                      onChange={(e) => setPaymentForm({ amount: e.target.value })}
+                      max={pendingAmount}
+                      min="1"
+                      required
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Remaining balance will be: {formatCurrency(pendingAmount - (parseFloat(paymentForm.amount) || 0))}
+                    </p>
+                  </div>
+                  <Button type="submit" className="w-full">
+                    <Save className="mr-2 h-4 w-4" />
+                    Record & Generate Receipt
+                  </Button>
+                </form>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Receipt className="h-5 w-5" />
+                Payment History
+              </CardTitle>
+              <CardDescription>Previous installments and generated receipts.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {payments.length > 0 ? (
+                <div className="space-y-4">
+                  {payments.slice().reverse().map((payment) => (
+                    <div key={payment.id} className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-muted/50">
+                      <div>
+                        <h4 className="font-semibold text-lg">{formatCurrency(payment.amount_paid)}</h4>
+                        <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                          <span className="font-medium text-foreground">{payment.receipt_number}</span>
+                          <span>{new Date(payment.created_at).toLocaleDateString()}</span>
+                        </div>
+                      </div>
+                      <Button variant="ghost" size="icon" onClick={() => generateReceipt(payment)}>
+                        <Download className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center p-8 text-center border rounded-lg border-dashed">
+                  <Receipt className="h-10 w-10 text-muted-foreground opacity-20 mb-4" />
+                  <p className="text-sm text-muted-foreground">No payment history found.</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default RecordPayment;
