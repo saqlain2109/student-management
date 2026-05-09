@@ -112,7 +112,10 @@ export const api = {
   },
   payments: {
     getAll: async () => {
-      const { data, error } = await supabase.from('payments').select('*').order('created_at', { ascending: false });
+      const { data, error } = await supabase
+        .from('payments')
+        .select('*, students(full_name)')
+        .order('created_at', { ascending: false });
       if (error) throw error;
       return data;
     },

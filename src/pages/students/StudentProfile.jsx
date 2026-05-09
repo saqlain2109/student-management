@@ -106,35 +106,49 @@ const StudentProfile = () => {
         <div className="col-span-1 md:col-span-2 space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Contact Information</CardTitle>
+              <CardTitle className="text-lg">Personal & Parental Details</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-2">
               <div className="flex items-center gap-3 rounded-lg border p-3">
-                <Mail className="h-5 w-5 text-muted-foreground" />
+                <UserCircle className="h-5 w-5 text-muted-foreground" />
                 <div>
-                  <p className="text-xs text-muted-foreground">Email Address</p>
-                  <p className="text-sm font-medium">{student.email || 'N/A'}</p>
+                  <p className="text-xs text-muted-foreground">Father's Name</p>
+                  <p className="text-sm font-medium">{student.father_name || 'N/A'}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 rounded-lg border p-3">
-                <Phone className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-xs text-muted-foreground">Phone Number</p>
-                  <p className="text-sm font-medium">{student.phone || 'N/A'}</p>
-                </div>
-              </div>
-              <div className="col-span-1 sm:col-span-2 flex items-center gap-3 rounded-lg border p-3">
-                <MapPin className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-xs text-muted-foreground">Residential Address</p>
-                  <p className="text-sm font-medium">{student.address || 'N/A'}</p>
-                </div>
-              </div>
-              <div className="col-span-1 sm:col-span-2 flex items-center gap-3 rounded-lg border p-3">
                 <UserCircle className="h-5 w-5 text-muted-foreground" />
                 <div>
-                  <p className="text-xs text-muted-foreground">Parent/Guardian Details</p>
-                  <p className="text-sm font-medium">{student.parent_details || 'N/A'}</p>
+                  <p className="text-xs text-muted-foreground">Mother's Name</p>
+                  <p className="text-sm font-medium">{student.mother_name || 'N/A'}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 rounded-lg border p-3">
+                <FileText className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Aadhaar Number</p>
+                  <p className="text-sm font-medium">{student.aadhaar_number || 'N/A'}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 rounded-lg border p-3">
+                <FileText className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Date of Birth</p>
+                  <p className="text-sm font-medium">{student.dob || 'N/A'}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 rounded-lg border p-3">
+                <UserCircle className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Gender</p>
+                  <p className="text-sm font-medium">{student.gender || 'N/A'}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 rounded-lg border p-3">
+                <FileText className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Academic Year</p>
+                  <p className="text-sm font-medium">{student.academic_year || 'N/A'}</p>
                 </div>
               </div>
             </CardContent>
@@ -142,30 +156,35 @@ const StudentProfile = () => {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Documents</CardTitle>
-              <CardDescription>Uploaded files and proofs.</CardDescription>
+              <CardTitle className="text-lg">Contact Information</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="flex items-center justify-between rounded-md border p-4">
-                  <div className="flex items-center gap-3">
-                    <FileText className="h-5 w-5 text-blue-500" />
-                    <div>
-                      <p className="text-sm font-medium">Identity_Proof.pdf</p>
-                      <p className="text-xs text-muted-foreground">1.2 MB</p>
-                    </div>
-                  </div>
-                  <Button variant="ghost" size="sm">View</Button>
+            <CardContent className="grid gap-4 sm:grid-cols-2">
+              <div className="flex items-center gap-3 rounded-lg border p-3">
+                <Phone className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Contact Number</p>
+                  <p className="text-sm font-medium">{student.contact_number || 'N/A'}</p>
                 </div>
-                <div className="flex items-center justify-between rounded-md border p-4">
-                  <div className="flex items-center gap-3">
-                    <FileText className="h-5 w-5 text-blue-500" />
-                    <div>
-                      <p className="text-sm font-medium">Previous_Marksheet.pdf</p>
-                      <p className="text-xs text-muted-foreground">2.4 MB</p>
-                    </div>
-                  </div>
-                  <Button variant="ghost" size="sm">View</Button>
+              </div>
+              <div className="flex items-center gap-3 rounded-lg border p-3">
+                <Phone className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Alternate Contact</p>
+                  <p className="text-sm font-medium">{student.alternate_contact || 'N/A'}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 rounded-lg border p-3">
+                <Mail className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Email Address</p>
+                  <p className="text-sm font-medium">{student.email || 'N/A'}</p>
+                </div>
+              </div>
+              <div className="col-span-1 sm:col-span-2 flex items-center gap-3 rounded-lg border p-3">
+                <MapPin className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Residential Address</p>
+                  <p className="text-sm font-medium">{student.address || 'N/A'}</p>
                 </div>
               </div>
             </CardContent>

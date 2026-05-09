@@ -32,6 +32,9 @@ const RecordPayment = () => {
   
   const [totalFeeForm, setTotalFeeForm] = useState({ amount: '' });
   const [paymentForm, setPaymentForm] = useState({ amount: '' });
+  const [showFeeModal, setShowFeeModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -63,12 +66,16 @@ const RecordPayment = () => {
     e.preventDefault();
     if (!totalFeeForm.amount) return;
     try {
+      setSaving(true);
       const updated = await api.fees.update(feeRecord.id, {
         total_amount: parseFloat(totalFeeForm.amount)
       });
       setFeeRecord(updated);
+      setShowFeeModal(false);
     } catch (error) {
       console.error(error);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -84,6 +91,7 @@ const RecordPayment = () => {
     }
     
     try {
+      setSaving(true);
       const newPayment = await api.payments.create({
         student_id: studentId,
         fee_id: feeRecord.id,
@@ -92,12 +100,13 @@ const RecordPayment = () => {
       });
       
       setPaymentForm({ amount: '' });
-      loadData(); // reload all to get updated fee record and payment history
-      
-      // Auto generate receipt on payment
+      setShowPaymentModal(false);
+      loadData(); 
       generateReceipt(newPayment);
     } catch (error) {
       console.error(error);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -233,156 +242,208 @@ const RecordPayment = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 w-full max-w-[1400px] mx-auto pb-10 px-6 lg:px-8">
+      {/* Header Section */}
       <div className="flex items-center gap-4">
         <Link to="/fees">
-          <Button variant="outline" size="icon">
+          <Button variant="outline" size="icon" className="h-10 w-10 border-slate-200">
             <ArrowLeft className="h-4 w-4" />
           </Button>
         </Link>
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Fee Management Portal</h2>
-          <p className="text-muted-foreground mt-1">Record payments and manage dues for {student.full_name}</p>
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900">Fees Management</h2>
+          <p className="text-sm text-slate-500 font-medium">
+            Student: <span className="text-slate-900">{student.full_name}</span> | Roll: {student.roll_number}
+          </p>
         </div>
       </div>
 
+      {/* Summary Cards Section */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <Card className="border-l-4 border-l-primary">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Course Fee</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(feeRecord.total_amount)}</div>
+        <Card className="border-slate-200 shadow-sm">
+          <CardContent className="p-5 flex items-center justify-between">
+            <div>
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Fee</p>
+              <div className="text-xl font-bold text-slate-900 mt-1">
+                {formatCurrency(feeRecord.total_amount)}
+              </div>
+              <button 
+                onClick={() => setShowFeeModal(true)}
+                className="text-[10px] text-primary font-bold uppercase hover:underline mt-2 flex items-center gap-1"
+              >
+                <FileText className="h-3 w-3" /> Update
+              </button>
+            </div>
           </CardContent>
         </Card>
-        <Card className="border-l-4 border-l-emerald-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Paid</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(feeRecord.paid_amount)}</div>
+
+        <Card className="border-slate-200 shadow-sm">
+          <CardContent className="p-5">
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Paid Amount</p>
+            <div className="text-xl font-bold text-emerald-600 mt-1">
+              {formatCurrency(feeRecord.paid_amount)}
+            </div>
           </CardContent>
         </Card>
-        <Card className="border-l-4 border-l-destructive">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Balance</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-destructive">{formatCurrency(pendingAmount)}</div>
+
+        <Card className="border-slate-200 shadow-sm">
+          <CardContent className="p-5">
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Pending Balance</p>
+            <div className="text-xl font-bold text-rose-600 mt-1">
+              {formatCurrency(pendingAmount)}
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Fee Structure Setup
-              </CardTitle>
-              <CardDescription>Set the total fee expected for this course.</CardDescription>
+      {/* Action & History Section */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2">
+            <Receipt className="h-4 w-4 text-slate-400" />
+            Transaction History
+          </h3>
+          <Button 
+            onClick={() => setShowPaymentModal(true)}
+            disabled={isFullyPaid || feeRecord.total_amount === 0}
+            className="h-10 px-6 font-bold shadow-sm"
+          >
+            <CreditCard className="mr-2 h-4 w-4" />
+            Record Payment
+          </Button>
+        </div>
+
+        <Card className="border-slate-200 shadow-sm overflow-hidden">
+          <CardContent className="p-0">
+            {payments.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50 border-b border-slate-100">
+                      <th className="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase">Date</th>
+                      <th className="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase">Receipt No</th>
+                      <th className="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase">Amount</th>
+                      <th className="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {payments.slice().reverse().map((payment) => (
+                      <tr key={payment.id} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="px-6 py-4 text-sm font-medium text-slate-600">
+                          {new Date(payment.created_at).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4 text-xs font-mono text-slate-500">
+                          {payment.receipt_number}
+                        </td>
+                        <td className="px-6 py-4 text-sm font-bold text-slate-900">
+                          {formatCurrency(payment.amount_paid)}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-8 px-3 text-xs font-bold text-primary hover:text-primary hover:bg-primary/5"
+                            onClick={() => generateReceipt(payment)}
+                          >
+                            <Download className="h-3.5 w-3.5 mr-1.5" />
+                            PDF
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="py-20 text-center">
+                <p className="text-sm font-medium text-slate-400">No transactions recorded yet.</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* MODALS SECTION */}
+      
+      {/* 1. Update Fee Modal */}
+      {showFeeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-[2px] p-4">
+          <Card className="w-full max-w-sm border-none shadow-2xl bg-white rounded-xl">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg font-bold">Update Total Fee</CardTitle>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSetTotalFee} className="flex items-end gap-4">
-                <div className="flex-1 space-y-2">
-                  <label className="text-sm font-medium">Total Amount (INR)</label>
+              <form onSubmit={handleSetTotalFee} className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-500 uppercase">Amount (INR)</label>
                   <Input 
                     type="number" 
+                    className="h-11 font-bold border-slate-200 focus:ring-primary"
                     value={totalFeeForm.amount}
                     onChange={(e) => setTotalFeeForm({ amount: e.target.value })}
-                    placeholder="e.g. 100000"
-                    min="0"
                     required
                   />
                 </div>
-                <Button type="submit" variant="secondary">Update</Button>
+                <div className="flex gap-2 pt-2">
+                  <Button type="button" variant="ghost" onClick={() => setShowFeeModal(false)} className="flex-1 h-11 font-bold text-slate-500">Cancel</Button>
+                  <Button type="submit" className="flex-1 h-11 font-bold" disabled={saving}>
+                    {saving ? 'Saving...' : 'Update'}
+                  </Button>
+                </div>
               </form>
             </CardContent>
           </Card>
+        </div>
+      )}
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CreditCard className="h-5 w-5" />
-                Record Payment
-              </CardTitle>
-              <CardDescription>Log a new fee installment payment.</CardDescription>
+      {/* 2. Record Payment Modal */}
+      {showPaymentModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-[2px] p-4">
+          <Card className="w-full max-w-sm border-none shadow-2xl bg-white rounded-xl">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg font-bold">Record Payment</CardTitle>
+              <CardDescription className="text-xs font-medium">Add a new fee installment</CardDescription>
             </CardHeader>
             <CardContent>
-              {feeRecord.total_amount === 0 ? (
-                <div className="flex items-center gap-3 rounded-lg bg-yellow-50 p-4 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-500">
-                  <AlertCircle className="h-5 w-5" />
-                  <p className="text-sm font-medium">Please setup the total course fee first.</p>
-                </div>
-              ) : isFullyPaid ? (
-                <div className="flex items-center gap-3 rounded-lg bg-emerald-50 p-4 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-500">
-                  <AlertCircle className="h-5 w-5" />
-                  <p className="text-sm font-medium">All dues cleared. No pending payments.</p>
-                </div>
-              ) : (
-                <form onSubmit={handleRecordPayment} className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Payment Amount (INR)</label>
+              <form onSubmit={handleRecordPayment} className="space-y-5">
+                <div className="space-y-2">
+                  <div className="flex justify-between items-end">
+                    <label className="text-xs font-bold text-slate-500 uppercase">Amount</label>
+                    <span className="text-[10px] font-bold text-slate-400">Max: {formatCurrency(pendingAmount)}</span>
+                  </div>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-lg font-bold text-slate-400">₹</span>
                     <Input 
                       type="number" 
+                      className="h-12 pl-8 text-xl font-bold border-slate-200 focus:ring-primary"
                       value={paymentForm.amount}
                       onChange={(e) => setPaymentForm({ amount: e.target.value })}
                       max={pendingAmount}
                       min="1"
                       required
+                      autoFocus
                     />
-                    <p className="text-xs text-muted-foreground">
-                      Remaining balance will be: {formatCurrency(pendingAmount - (parseFloat(paymentForm.amount) || 0))}
-                    </p>
                   </div>
-                  <Button type="submit" className="w-full">
-                    <Save className="mr-2 h-4 w-4" />
-                    Record & Generate Receipt
+                  <button 
+                    type="button" 
+                    className="text-[10px] text-primary font-bold uppercase hover:underline"
+                    onClick={() => setPaymentForm({ amount: pendingAmount.toString() })}
+                  >
+                    Set Full Balance
+                  </button>
+                </div>
+                
+                <div className="flex gap-2 pt-2">
+                  <Button type="button" variant="ghost" onClick={() => setShowPaymentModal(false)} className="flex-1 h-12 font-bold text-slate-500">Back</Button>
+                  <Button type="submit" className="flex-1 h-12 font-bold shadow-lg shadow-primary/20" disabled={saving}>
+                    {saving ? 'Recording...' : 'Record & Print'}
                   </Button>
-                </form>
-              )}
+                </div>
+              </form>
             </CardContent>
           </Card>
         </div>
-
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Receipt className="h-5 w-5" />
-                Payment History
-              </CardTitle>
-              <CardDescription>Previous installments and generated receipts.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {payments.length > 0 ? (
-                <div className="space-y-4">
-                  {payments.slice().reverse().map((payment) => (
-                    <div key={payment.id} className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-muted/50">
-                      <div>
-                        <h4 className="font-semibold text-lg">{formatCurrency(payment.amount_paid)}</h4>
-                        <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                          <span className="font-medium text-foreground">{payment.receipt_number}</span>
-                          <span>{new Date(payment.created_at).toLocaleDateString()}</span>
-                        </div>
-                      </div>
-                      <Button variant="ghost" size="icon" onClick={() => generateReceipt(payment)}>
-                        <Download className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center p-8 text-center border rounded-lg border-dashed">
-                  <Receipt className="h-10 w-10 text-muted-foreground opacity-20 mb-4" />
-                  <p className="text-sm text-muted-foreground">No payment history found.</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+      )}
     </div>
   );
 };
