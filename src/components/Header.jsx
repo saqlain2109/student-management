@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Bell, User, Clock, CheckCircle2, CreditCard } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Search, Bell, Clock, CheckCircle2, CreditCard } from 'lucide-react';
 import { Input } from './ui/input';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api';

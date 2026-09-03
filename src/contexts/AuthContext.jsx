@@ -1,18 +1,20 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
+
+/* eslint-disable react-refresh/only-export-components */
 
 const AuthContext = createContext({});
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(() => {
+    const localUser = localStorage.getItem('edu_admin_user');
+    return localUser ? JSON.parse(localUser) : null;
+  });
+  const [loading, setLoading] = useState(() => !localStorage.getItem('edu_admin_user'));
 
   useEffect(() => {
     // 1. First check if there's a default admin session in localStorage
-    const localUser = localStorage.getItem('edu_admin_user');
-    if (localUser) {
-      setUser(JSON.parse(localUser));
-      setLoading(false);
+    if (localStorage.getItem('edu_admin_user')) {
       return;
     }
 

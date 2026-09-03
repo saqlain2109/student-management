@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, Download, FileText, AlertCircle, CreditCard, Receipt } from 'lucide-react';
+import { ArrowLeft, Download, FileText, CreditCard, Receipt } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../../components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/card';
 import { api } from '../../services/api';
 import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import 'jspdf-autotable';
 
 const numberToWords = (num) => {
     const a = ['','One ','Two ','Three ','Four ', 'Five ','Six ','Seven ','Eight ','Nine ','Ten ','Eleven ','Twelve ','Thirteen ','Fourteen ','Fifteen ','Sixteen ','Seventeen ','Eighteen ','Nineteen '];
@@ -36,11 +36,7 @@ const RecordPayment = () => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    loadData();
-  }, [studentId, navigate]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       const studentData = await api.students.getById(studentId);
       if (!studentData) {
@@ -60,7 +56,13 @@ const RecordPayment = () => {
     } catch (error) {
       console.error(error);
     }
-  };
+  }, [studentId, navigate]);
+
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleSetTotalFee = async (e) => {
     e.preventDefault();

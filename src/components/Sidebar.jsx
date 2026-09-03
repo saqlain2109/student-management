@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, CreditCard, Receipt, Settings, LogOut, BookOpen } from 'lucide-react';
+import { LayoutDashboard, Users, CreditCard, Settings, LogOut, BookOpen } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useAuth } from '../contexts/AuthContext';
 

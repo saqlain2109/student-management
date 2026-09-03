@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Plus, MoreHorizontal, Eye, Edit, Trash2 } from 'lucide-react';
+import { Search, Plus, Eye, Edit, Trash2 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
@@ -11,10 +11,6 @@ const StudentsList = () => {
   const [students, setStudents] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    loadStudents();
-  }, []);
 
   const loadStudents = async () => {
     setLoading(true);
@@ -27,6 +23,12 @@ const StudentsList = () => {
       setLoading(false);
     }
   };
+
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    loadStudents();
+  }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this student record?')) {

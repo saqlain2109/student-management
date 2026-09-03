@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Users, CreditCard, Landmark, TrendingUp, AlertCircle, Download } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -24,10 +24,6 @@ const Dashboard = () => {
 
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchStats();
-  }, []);
 
   const fetchStats = async () => {
     try {
@@ -76,6 +72,12 @@ const Dashboard = () => {
       setLoading(false);
     }
   };
+
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    fetchStats();
+  }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleExport = () => {
     const headers = ['Date', 'Type', 'Student Name', 'Detail', 'Amount'];

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { BookOpen, Plus, Trash2, Edit } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -18,10 +18,6 @@ const CoursesList = () => {
     fee_amount: ''
   });
 
-  useEffect(() => {
-    loadCourses();
-  }, []);
-
   const loadCourses = async () => {
     setLoading(true);
     try {
@@ -33,6 +29,12 @@ const CoursesList = () => {
       setLoading(false);
     }
   };
+
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    loadCourses();
+  }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleAddCourse = async (e) => {
     e.preventDefault();

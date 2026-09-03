@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Save, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../../components/ui/card';
@@ -14,7 +14,7 @@ const StudentForm = () => {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(isEditMode);
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState(() => ({
     full_name: '',
     father_name: '',
     mother_name: '',
@@ -29,18 +29,11 @@ const StudentForm = () => {
     course_id: '',
     admission_number: '',
     roll_number: '',
-    image_url: ''
-  });
-
-  // Auto-generate Admission Number on Mount
-  useEffect(() => {
-    if (!isEditMode) {
-      const year = new Date().getFullYear();
-      const random = Math.floor(1000 + Math.random() * 9000); // 4 digit random
-      const autoAdm = `ADM-${year}-${random}`;
-      setFormData(prev => ({ ...prev, admission_number: autoAdm }));
-    }
-  }, [isEditMode]);
+    image_url: '',
+    ...(isEditMode ? {} : {
+      admission_number: `ADM-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`
+    })
+  }));
 
   const [selectedStandard, setSelectedStandard] = useState('');
   const [selectedStream, setSelectedStream] = useState('');
@@ -102,6 +95,7 @@ const StudentForm = () => {
   }, [selectedStandard, parsedCourses]);
 
   // When standard or stream changes, find the matched course and suggest Roll Number
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (isEditMode && !selectedStandard) return; 
     if (!selectedStandard) return;
@@ -132,6 +126,7 @@ const StudentForm = () => {
     }
 
   }, [selectedStandard, selectedStream, parsedCourses, availableStreams, isEditMode]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleChange = (e) => {
     const { name, value } = e.target;
