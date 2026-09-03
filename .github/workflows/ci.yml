@@ -32,10 +32,3 @@ jobs:
 
       - name: Build React application
         run: npm run build
-
-      - name: Build Docker image
-        run: |
-          docker build \
-            --build-arg VITE_SUPABASE_URL="${{ secrets.VITE_SUPABASE_URL }}" \
-            --build-arg VITE_SUPABASE_ANON_KEY="${{ secrets.VITE_SUPABASE_ANON_KEY }}" \
-            -t student-management:latest .
