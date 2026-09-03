@@ -56,7 +56,7 @@ const Header = () => {
           <Input
             type="search"
             placeholder="Search students, roll numbers..."
-            className="w-full bg-slate-50 border-none pl-10 h-10 md:w-[300px] lg:w-[400px] rounded-xl focus:ring-0"
+            className="w-full bg-muted border-border pl-10 h-10 md:w-[300px] lg:w-[400px] rounded-xl focus:ring-0"
           />
         </form>
       </div>
@@ -78,7 +78,7 @@ const Header = () => {
           >
             <Bell className="h-5 w-5" />
             {notifications.length > 0 && (
-              <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-rose-500 border-2 border-white" />
+              <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-rose-500 border-2 border-background" />
             )}
           </button>
 
