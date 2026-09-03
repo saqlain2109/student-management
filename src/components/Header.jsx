@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
-import { Search, Bell, Clock, CheckCircle2, CreditCard } from 'lucide-react';
+import { Search, Bell, Clock, CheckCircle2, CreditCard, Moon, Sun } from 'lucide-react';
 import { Input } from './ui/input';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api';
+import { useTheme } from '../contexts/ThemeContext';
 
 const Header = () => {
   const { user } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const userEmail = user?.email || 'Admin User';
@@ -60,10 +62,19 @@ const Header = () => {
       </div>
       
       <div className="flex items-center gap-4">
+        <button
+          type="button"
+          onClick={toggleTheme}
+          aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+          title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+          className="rounded-xl border border-border bg-card p-2.5 text-muted-foreground transition-all hover:bg-muted hover:text-foreground active:scale-95"
+        >
+          {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+        </button>
         <div className="relative">
           <button 
             onClick={() => setShowNotifications(!showNotifications)}
-            className="relative rounded-xl p-2.5 text-slate-500 hover:bg-slate-100 transition-all active:scale-95"
+            className="relative rounded-xl p-2.5 text-muted-foreground hover:bg-muted transition-all active:scale-95"
           >
             <Bell className="h-5 w-5" />
             {notifications.length > 0 && (
@@ -72,15 +83,15 @@ const Header = () => {
           </button>
 
           {showNotifications && (
-            <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-              <div className="p-4 border-b border-slate-50 flex items-center justify-between">
+            <div className="absolute right-0 mt-2 w-80 bg-card rounded-2xl shadow-2xl border border-border overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="p-4 border-b border-border flex items-center justify-between">
                 <h3 className="text-sm font-black uppercase tracking-widest">Notifications</h3>
                 <span className="text-[10px] font-bold text-primary bg-primary/5 px-2 py-0.5 rounded-full">{notifications.length} NEW</span>
               </div>
               <div className="max-h-[400px] overflow-y-auto">
                 {notifications.length > 0 ? (
                   notifications.map((n) => (
-                    <div key={n.id} className="p-4 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0 flex gap-3">
+                    <div key={n.id} className="p-4 hover:bg-muted transition-colors border-b border-border last:border-0 flex gap-3">
                       <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${
                         n.type === 'REG' ? 'bg-blue-50 text-blue-500' : 'bg-emerald-50 text-emerald-500'
                       }`}>
@@ -101,19 +112,19 @@ const Header = () => {
                   </div>
                 )}
               </div>
-              <div className="p-3 bg-slate-50 text-center">
+              <div className="p-3 bg-muted text-center">
                 <button className="text-[10px] font-black text-slate-400 uppercase hover:text-primary transition-colors">Clear All Notifications</button>
               </div>
             </div>
           )}
         </div>
         
-        <div className="flex items-center gap-3 border-l border-slate-100 pl-4">
+        <div className="flex items-center gap-3 border-l border-border pl-4">
           <div className="hidden sm:flex flex-col items-end">
-            <span className="text-sm font-black text-slate-900 truncate max-w-[150px] uppercase italic tracking-tight">{userEmail.split('@')[0]}</span>
+            <span className="text-sm font-black text-foreground truncate max-w-[150px] uppercase italic tracking-tight">{userEmail.split('@')[0]}</span>
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Administrator</span>
           </div>
-          <div className="h-10 w-10 rounded-xl bg-slate-900 flex items-center justify-center text-white font-black text-lg shadow-lg shadow-slate-200">
+          <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center text-primary-foreground font-black text-lg shadow-lg shadow-primary/20">
             {userInitial}
           </div>
         </div>

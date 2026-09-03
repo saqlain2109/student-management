@@ -11,12 +11,14 @@ import CoursesList from './pages/courses/CoursesList';
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/auth/Login';
+import { ThemeProvider } from './contexts/ThemeContext';
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <Routes>
+    <ThemeProvider>
+      <AuthProvider>
+        <Router>
+          <Routes>
           <Route path="/login" element={<Login />} />
           
           <Route path="/" element={
@@ -43,9 +45,10 @@ function App() {
 
           {/* Catch all redirect to dashboard */}
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </Routes>
-      </Router>
-    </AuthProvider>
+          </Routes>
+        </Router>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

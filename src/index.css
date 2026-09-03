@@ -73,5 +73,9 @@
   body {
     @apply bg-background text-foreground;
     font-family: 'Outfit', sans-serif;
+    min-width: 320px;
+    background-image: radial-gradient(hsl(var(--muted-foreground) / 0.12) 1px, transparent 1px);
+    background-size: 24px 24px;
+    transition: background-color 200ms ease, color 200ms ease;
   }
 }
