@@ -34,4 +34,18 @@ jobs:
         run: npm run build
 
       - name: Build Docker image
-        run: docker build --build-arg VITE_SUPABASE_URL="${{ secrets.VITE_SUPABASE_URL }}" --build-arg VITE_SUPABASE_ANON_KEY="${{ secrets.VITE_SUPABASE_ANON_KEY }}" -t student-management:latest .
+        run: |
+          docker build \
+            --build-arg VITE_SUPABASE_URL="${{ secrets.VITE_SUPABASE_URL }}" \
+            --build-arg VITE_SUPABASE_ANON_KEY="${{ secrets.VITE_SUPABASE_ANON_KEY }}" \
+            -t student-management:latest .
+
+      - name: Deploy container
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          docker stop student-management || true
+          docker rm student-management || true
+          docker run -d \
+            --name student-management \
+            -p 8080:80 \
+            student-management:latest
